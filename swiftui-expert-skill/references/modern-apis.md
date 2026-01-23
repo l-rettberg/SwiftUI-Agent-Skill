@@ -260,7 +260,7 @@ GeometryReader { geometry in
     Text("Width: \(geometry.size.width)")
 }
 
-// Better - use containerRelativeFrame
+// Better - use containerRelativeFrame (iOS 17+)
 Text("Full width")
     .containerRelativeFrame(.horizontal)
 
@@ -270,6 +270,8 @@ Text("Auto-sized")
 ```
 
 ### GeometryReader Alternatives
+
+> **iOS 17+**: `containerRelativeFrame` and `visualEffect` require iOS 17 or later.
 
 **Don't use `GeometryReader` if a newer alternative works.**
 
