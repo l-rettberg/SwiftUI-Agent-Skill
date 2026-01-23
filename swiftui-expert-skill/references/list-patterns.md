@@ -98,12 +98,12 @@ ForEach(items) { item in
 let items = ["A", "B", "C"]
 
 // Correct
-ForEach(items.enumerated(), id: \.element) { index, item in
+ForEach(items.enumerated(), id: \.offset) { index, item in
     Text("\(index): \(item)")
 }
 
 // Wrong - unnecessary array conversion
-ForEach(Array(items.enumerated()), id: \.element) { index, item in
+ForEach(Array(items.enumerated()), id: \.offset) { index, item in
     Text("\(index): \(item)")
 }
 ```
