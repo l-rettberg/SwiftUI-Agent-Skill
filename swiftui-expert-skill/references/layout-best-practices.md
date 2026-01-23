@@ -139,7 +139,7 @@ GeometryReader { outerGeometry in
     }
 }
 
-// Good - single geometry reader or use alternatives
+// Good - single geometry reader or use alternatives (iOS 17+)
 containerRelativeFrame(.horizontal) { width, _ in
     width * 0.8
 }
@@ -168,8 +168,10 @@ containerRelativeFrame(.horizontal) { width, _ in
 
 **Place view logic into view models or similar, so it can be tested.**
 
+> **iOS 17+**: Use `@Observable` macro with `@State` for view models.
+
 ```swift
-// Good - logic in testable model
+// Good - logic in testable model (iOS 17+)
 @Observable
 @MainActor
 final class LoginViewModel {
@@ -178,7 +180,7 @@ final class LoginViewModel {
     var isValid: Bool {
         !email.isEmpty && password.count >= 8
     }
-    
+
     func login() async throws {
         // Business logic here
     }
@@ -186,7 +188,7 @@ final class LoginViewModel {
 
 struct LoginView: View {
     @State private var viewModel = LoginViewModel()
-    
+
     var body: some View {
         Form {
             TextField("Email", text: $viewModel.email)
@@ -200,7 +202,44 @@ struct LoginView: View {
         }
     }
 }
+```
 
+> **iOS 16 and earlier**: Use `ObservableObject` protocol with `@StateObject`.
+
+```swift
+// Good - logic in testable model (iOS 16 and earlier)
+@MainActor
+final class LoginViewModel: ObservableObject {
+    @Published var email = ""
+    @Published var password = ""
+    var isValid: Bool {
+        !email.isEmpty && password.count >= 8
+    }
+
+    func login() async throws {
+        // Business logic here
+    }
+}
+
+struct LoginView: View {
+    @StateObject private var viewModel = LoginViewModel()
+
+    var body: some View {
+        Form {
+            TextField("Email", text: $viewModel.email)
+            SecureField("Password", text: $viewModel.password)
+            Button("Login") {
+                Task {
+                    try? await viewModel.login()
+                }
+            }
+            .disabled(!viewModel.isValid)
+        }
+    }
+}
+```
+
+```swift
 // Bad - logic embedded in view
 struct LoginView: View {
     @State private var email = ""
