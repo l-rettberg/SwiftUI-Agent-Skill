@@ -6,11 +6,15 @@
 |---------|----------|-------|
 | `@State` | Internal view state that triggers updates | Must be `private` |
 | `@Binding` | Child view needs to modify parent's state | Don't use for read-only |
-| `@StateObject` | View owns an `ObservableObject` instance | Pre-iOS 17 pattern |
-| `@ObservedObject` | View receives an `ObservableObject` from outside | Never create inline |
 | `@Bindable` | iOS 17+: View receives `@Observable` object and needs bindings | For injected observables |
 | `let` | Read-only value passed from parent | Simplest option |
 | `var` | Read-only value that child observes via `.onChange()` | For reactive reads |
+
+**Legacy (Pre-iOS 17):**
+| Wrapper | Use When | Notes |
+|---------|----------|-------|
+| `@StateObject` | View owns an `ObservableObject` instance | Use `@State` with `@Observable` instead |
+| `@ObservedObject` | View receives an `ObservableObject` from outside | Never create inline |
 
 ## @State
 
@@ -22,12 +26,15 @@ Always mark `@State` properties as `private`. Use for internal view state that t
 @State private var selectedTab = 0
 ```
 
-### iOS 17+ with @Observable
+**Why Private?** Marking state as `private` makes it clear what's created by the view versus what's passed in. It also prevents accidentally passing initial values that will be ignored (see "Don't Pass Values as @State" below).
 
-With iOS 17's `@Observable` macro, use `@State` instead of `@StateObject`:
+### iOS 17+ with @Observable (Preferred)
+
+**Always prefer `@Observable` over `ObservableObject`.** With iOS 17's `@Observable` macro, use `@State` instead of `@StateObject`:
 
 ```swift
 @Observable
+@MainActor  // Always mark @Observable classes with @MainActor
 final class DataModel {
     var name = "Some Name"
     var count = 0
@@ -44,6 +51,8 @@ struct MyView: View {
     }
 }
 ```
+
+**Note**: You may want to mark `@Observable` classes with `@MainActor` to ensure thread safety with SwiftUI, unless your project or package uses Default Actor Isolation set to `MainActor`—in which case, the explicit attribute is redundant and can be omitted.
 
 ## @Binding
 
@@ -91,7 +100,9 @@ struct DisplayView: View {
 }
 ```
 
-## @StateObject vs @ObservedObject
+## @StateObject vs @ObservedObject (Legacy - Pre-iOS 17)
+
+**Note**: These are legacy patterns. Always prefer `@Observable` with `@State` for iOS 17+.
 
 The key distinction is **ownership**:
 
@@ -99,6 +110,7 @@ The key distinction is **ownership**:
 - `@ObservedObject`: View **receives** the object from outside
 
 ```swift
+// Legacy pattern - use @Observable instead
 class MyViewModel: ObservableObject {
     @Published var items: [String] = []
 }
@@ -137,6 +149,48 @@ struct GoodView: View {
     @StateObject private var viewModel = MyViewModel()
 }
 ```
+
+**Modern Alternative**: Use `@Observable` with `@State` instead of `ObservableObject` patterns.
+
+## Don't Pass Values as @State
+
+**Critical**: Never declare passed values as `@State` or `@StateObject`. The value you provide is only an initial value and won't update.
+
+```swift
+// Parent
+struct ParentView: View {
+    @State private var item = Item(name: "Original")
+    
+    var body: some View {
+        ChildView(item: item)
+        Button("Change") {
+            item.name = "Updated"  // Child won't see this!
+        }
+    }
+}
+
+// Wrong - child ignores updates from parent
+struct ChildView: View {
+    @State var item: Item  // Accepts initial value only!
+    
+    var body: some View {
+        Text(item.name)  // Shows "Original" forever
+    }
+}
+
+// Correct - child receives updates
+struct ChildView: View {
+    let item: Item  // Or @Binding if child needs to modify
+    
+    var body: some View {
+        Text(item.name)  // Updates when parent changes
+    }
+}
+```
+
+**Why**: `@State` and `@StateObject` retain values between view updates. That's their purpose. When a parent passes a new value, the child reuses its existing state.
+
+**Prevention**: Always mark `@State` and `@StateObject` as `private`. This prevents them from appearing in the generated initializer.
 
 ## @Bindable (iOS 17+)
 
@@ -221,29 +275,13 @@ struct MyView: View {
 }
 ```
 
-### @EnvironmentObject (Pre-iOS 17)
+### @Environment with @Observable (iOS 17+ - Preferred)
 
-Share observable objects through the environment:
-
-```swift
-class AppState: ObservableObject {
-    @Published var isLoggedIn = false
-}
-
-// Inject at root
-ContentView()
-    .environmentObject(AppState())
-
-// Access in child
-struct ChildView: View {
-    @EnvironmentObject var appState: AppState
-}
-```
-
-### @Environment with @Observable (iOS 17+)
+**Always prefer this pattern** for sharing state through the environment:
 
 ```swift
 @Observable
+@MainActor
 final class AppState {
     var isLoggedIn = false
 }
@@ -258,6 +296,26 @@ struct ChildView: View {
 }
 ```
 
+### @EnvironmentObject (Legacy - Pre-iOS 17)
+
+Legacy pattern for sharing observable objects through the environment:
+
+```swift
+// Legacy pattern - use @Observable with @Environment instead
+class AppState: ObservableObject {
+    @Published var isLoggedIn = false
+}
+
+// Inject at root
+ContentView()
+    .environmentObject(AppState())
+
+// Access in child
+struct ChildView: View {
+    @EnvironmentObject var appState: AppState
+}
+```
+
 ## Decision Flowchart
 
 ```
@@ -265,8 +323,8 @@ Is this value owned by this view?
 ├─ YES: Is it a simple value type?
 │       ├─ YES → @State private var
 │       └─ NO (class):
-│           ├─ iOS 17+ @Observable → @State private var
-│           └─ ObservableObject → @StateObject private var
+│           ├─ Use @Observable → @State private var (mark class @MainActor)
+│           └─ Legacy ObservableObject → @StateObject private var
 │
 └─ NO (passed from parent):
     ├─ Does child need to MODIFY it?
@@ -277,6 +335,76 @@ Is this value owned by this view?
     │           ├─ YES → var + .onChange()
     │           └─ NO → let
     │
-    └─ Is it an ObservableObject from parent?
-        └─ YES → @ObservedObject var
+    └─ Is it a legacy ObservableObject from parent?
+        └─ YES → @ObservedObject var (consider migrating to @Observable)
 ```
+
+## State Privacy Rules
+
+**All view-owned state should be `private`:**
+
+```swift
+// Correct - clear what's created vs passed
+struct MyView: View {
+    // Created by view - private
+    @State private var isExpanded = false
+    @State private var viewModel = ViewModel()
+    @AppStorage("theme") private var theme = "light"
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Passed from parent - not private
+    let title: String
+    @Binding var isSelected: Bool
+    @Bindable var user: User
+    
+    var body: some View {
+        // ...
+    }
+}
+```
+
+**Why**: This makes dependencies explicit and improves code completion for the generated initializer.
+
+## Avoid Nested ObservableObject
+
+**Note**: This limitation only applies to `ObservableObject`. `@Observable` fully supports nested observed objects.
+
+```swift
+// Avoid - breaks animations and change tracking
+class Parent: ObservableObject {
+    @Published var child: Child  // Nested ObservableObject
+}
+
+class Child: ObservableObject {
+    @Published var value: Int
+}
+
+// Workaround - pass child directly to views
+struct ParentView: View {
+    @StateObject private var parent = Parent()
+    
+    var body: some View {
+        ChildView(child: parent.child)  // Pass nested object directly
+    }
+}
+
+struct ChildView: View {
+    @ObservedObject var child: Child
+    
+    var body: some View {
+        Text("\(child.value)")
+    }
+}
+```
+
+**Why**: SwiftUI can't track changes through nested `ObservableObject` properties. Manual workarounds break animations. With `@Observable`, this isn't an issue.
+
+## Key Principles
+
+1. **Always prefer `@Observable` over `ObservableObject`** for new code
+2. **Mark `@Observable` classes with `@MainActor` for thread safety (unless using default actor isolation)`**
+3. Use `@State` with `@Observable` classes (not `@StateObject`)
+4. Use `@Bindable` for injected `@Observable` objects that need bindings
+5. **Always mark `@State` and `@StateObject` as `private`**
+6. **Never declare passed values as `@State` or `@StateObject`**
+7. With `@Observable`, nested objects work fine; with `ObservableObject`, pass nested objects directly to child views
