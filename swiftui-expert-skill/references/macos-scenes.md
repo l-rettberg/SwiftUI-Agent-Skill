@@ -406,9 +406,9 @@ struct MyApp: App {
 
 ## Best Practices
 
-- **Use `Settings`** for preferences — never create a custom preferences window
-- **Use `MenuBarExtra`** for menu bar items — never use AppKit's `NSStatusItem` directly
-- **Use `WindowGroup`** as the primary scene — use `Window` only for supplementary singletons
+- **Use `Settings`** for preferences — prefer this over a custom preferences window
+- **Use `MenuBarExtra`** for menu bar items — prefer this over managing AppKit's `NSStatusItem` directly
+- **Use `WindowGroup`** as the primary scene — reserve `Window` for supplementary singletons
 - **Use `UtilityWindow`** for inspectors/palettes — it handles floating, focus, and visibility automatically
 - **Use `DocumentGroup`** for document-based apps — it provides the full File menu and document lifecycle
 - **Gate macOS-only scenes** with `#if os(macOS)` for multiplatform projects
