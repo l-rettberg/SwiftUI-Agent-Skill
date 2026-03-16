@@ -8,6 +8,9 @@ Expert guidance for any AI coding tool that supports the [Agent Skills open form
 
 This repository distills practical SwiftUI best practices into actionable, concise references for agents and code review workflows.
 
+## Cursor Marketplace Status
+Coming soon: this repository is being prepared as a Cursor plugin and is currently in review for the Cursor Marketplace.
+
 ## Who this is for
 - Teams adopting modern SwiftUI APIs who want quick, correct defaults
 - Developers reviewing or refactoring SwiftUI views and data flow
@@ -20,7 +23,12 @@ This repository distills practical SwiftUI best practices into actionable, conci
 
 ## How to Use This Skill
 
-### Option A: Using skills.sh (recommended)
+### Option A: Cursor plugin (coming soon)
+This repository is now packaged for Cursor plugin submission, but the marketplace listing is not live yet.
+
+Once approved, you'll be able to install it from the Cursor Marketplace.
+
+### Option B: Using skills.sh
 Install this skill with a single command:
 
 ```bash
@@ -32,7 +40,7 @@ For more information, [visit the skills.sh platform page](https://skills.sh/avdl
 Then use the skill in your AI agent, for example:
 > Use the swiftui expert skill and review the current SwiftUI code for state-management and performance improvements
 
-### Option B: Claude Code Plugin
+### Option C: Claude Code Plugin
 
 #### Personal Usage
 To install this Skill for your personal use in Claude Code:
@@ -70,7 +78,7 @@ To automatically provide this Skill to everyone working in a repository, configu
 
 When team members open the project, Claude Code will prompt them to install the Skill.
 
-### Option C: Manual install
+### Option D: Manual install
 1) **Clone** this repository.
 2) **Install or symlink** the `swiftui-expert-skill/` folder following your tool’s official skills installation docs (see links below).
 3) **Use your AI tool** as usual and ask it to use the “swiftui-expert” skill for SwiftUI tasks.
@@ -79,7 +87,7 @@ When team members open the project, Claude Code will prompt them to install the 
 Follow your tool’s official documentation, here are a few popular ones:
 - **Codex:** [Where to save skills](https://developers.openai.com/codex/skills/#where-to-save-skills)
 - **Claude:** [Using Skills](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview#using-skills)
-- **Cursor:** [Enabling Skills](https://cursor.com/docs/context/skills#enabling-skills)
+- **Cursor:** [Plugins documentation](https://cursor.com/docs/plugins)
 
 **How to verify**:
 
@@ -144,6 +152,8 @@ The repository includes a maintenance skill for keeping API guidance current:
 ```
 
 Use this skill after new iOS or Xcode releases to refresh the deprecated API reference. It requires the [Sosumi MCP](https://github.com/kanaa257/sosumi.ai) to be available. See `AGENTS.md` or `CONTRIBUTING.md` for details.
+
+Note: only `swiftui-expert-skill` is intended to be published in the Cursor plugin. The maintenance skill remains a repository workflow utility.
 
 ## Contributing
 
