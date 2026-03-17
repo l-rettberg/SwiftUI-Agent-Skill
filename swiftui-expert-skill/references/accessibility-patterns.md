@@ -56,7 +56,7 @@ Use `.disabled(true)` to make VoiceOver announce "Dimmed" for non-interactive el
 Use `Image(decorative:bundle:)` when an asset image is purely visual and should not appear in the accessibility tree.
 
 ```swift
-Image(decorative: "confetti", bundle: nil)
+Image(decorative: "confetti")
 ```
 
 This is appropriate for backgrounds, flourishes, and icons that do not add meaning beyond nearby text.
